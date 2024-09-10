@@ -1,141 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MCuser - Minecraft User Info</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-    }
-    .container {
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input {
-      padding: 10px;
-      width: 300px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    button {
-      padding: 10px 20px;
-      border: none;
-      background-color: #007bff;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    .user-info {
-      margin-top: 20px;
-    }
-    .error {
-      color: red;
-      margin-top: 20px;
-    }
-    #skinViewer {
-      width: 300px;
-      height: 400px;
-      margin: 20px auto;
-      background-color: #eee;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Skin Viewer</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <h1>MCuser - Minecraft User Info</h1>
-    <input type="text" id="usernameInput" placeholder="Enter Username" />
-    <button onclick="fetchUserData()">Fetch Data</button>
+    <h1>Minecraft Skin Viewer</h1>
+    <input type="text" id="username" placeholder="Enter Minecraft username">
+    <button onclick="fetchPlayerData()">Get Player Data</button>
 
-    <div id="error" class="error"></div>
-    <div id="userInfo" class="user-info"></div>
-    <canvas id="skinViewer"></canvas>
-  </div>
+    <div id="playerData"></div>
+    <div id="skinViewer"></div>
 
-  <script type="module">
-    import * as skinview3d from 'https://cdn.jsdelivr.net/npm/skinview3d@0.8.2/dist/skinview3d.esm.js';
+    <script>
+        async function fetchPlayerData() {
+            const username = document.getElementById('username').value;
+            if (!username) return;
 
-    async function fetchUserData() {
-      const username = document.getElementById('usernameInput').value.trim();
-      if (!username) {
-        document.getElementById('error').innerText = 'Username is required';
-        return;
-      }
+            const response = await fetch(`/api/minecraftData?username=${username}`);
+            const data = await response.json();
 
-      try {
-        const response = await fetch(`/.netlify/functions/mcuser?username=${username}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+            if (data.error) {
+                document.getElementById('playerData').innerText = data.error;
+                document.getElementById('skinViewer').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('playerData').innerText = `Username: ${data.username}\nUUID: ${data.uuid}`;
+            document.getElementById('skinViewer').innerHTML = `<img src="${data.skinUrl}" alt="${data.username}'s Skin" style="width: 200px; height: 200px;">`;
         }
-
-        const profileData = await response.json();
-        if (profileData.error) {
-          throw new Error(profileData.error);
-        }
-
-        const skinUrl = profileData.skin || '';
-        const capeUrl = profileData.cape || '';
-
-        document.getElementById('error').innerText = '';
-        document.getElementById('userInfo').innerHTML = `
-          <h2>${profileData.name}</h2>
-          <p>UUID: ${profileData.id}</p>
-          ${capeUrl ? `<p><strong>Cape:</strong> <img src="${capeUrl}" alt="Cape" /></p>` : '<p>No cape available</p>'}
-        `;
-
-        const canvas = document.getElementById('skinViewer');
-        if (!canvas) {
-          throw new Error('Canvas element not found');
-        }
-
-        const skinViewer = new skinview3d.SkinViewer({
-          canvas: canvas,
-          width: 300,
-          height: 400,
-          skin: skinUrl,
-          enableControls: true
-        });
-
-        // Configure the viewer
-        skinViewer.background = 0x5a76f3;
-        skinViewer.autoRotate = true;
-        skinViewer.zoom = 1;
-        skinViewer.fov = 70;
-        skinViewer.animation = new skinview3d.WalkingAnimation();
-
-        if (capeUrl) {
-          skinViewer.loadCape(capeUrl);
-        }
-      } catch (error) {
-        document.getElementById('error').innerText = `Error fetching user data: ${error.message}`;
-        console.error(error);
-        document.getElementById('userInfo').innerHTML = '';
-        document.getElementById('skinViewer').style.display = 'none';
-      }
-    }
-
-    function handleQueryParameter() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const username = urlParams.get('user');
-      if (username) {
-        document.getElementById('usernameInput').value = username;
-        fetchUserData();
-      }
-    }
-
-    handleQueryParameter();
-  </script>
+    </script>
 </body>
 </html>
