@@ -29,9 +29,7 @@
     <div id="skinViewer"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three/examples/jsm/loaders/TextureLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three/examples/jsm/OBJLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/GLTFLoader.js"></script>
     <script>
         async function fetchPlayerData() {
             const username = document.getElementById('username').value;
@@ -65,36 +63,44 @@
         }
 
         function renderSkinIn3D(skinUrl) {
-            // Initialize the scene, camera, and renderer
+            // Create a scene, camera, and renderer
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer();
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('skinViewer').appendChild(renderer.domElement);
 
-            // Create a basic Minecraft player model
-            const geometry = new THREE.BoxGeometry();
-            const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
+            // Load the player model
+            const loader = new THREE.GLTFLoader();
+            loader.load('https://path-to-your-model.glb', function (gltf) {
+                const model = gltf.scene;
 
-            // Load the skin texture
-            const textureLoader = new THREE.TextureLoader();
-            textureLoader.load(skinUrl, function(texture) {
-                cube.material.map = texture;
-                cube.material.needsUpdate = true;
+                // Apply the skin texture
+                const textureLoader = new THREE.TextureLoader();
+                textureLoader.load(skinUrl, function (texture) {
+                    model.traverse(function (child) {
+                        if (child.isMesh) {
+                            child.material.map = texture;
+                            child.material.needsUpdate = true;
+                        }
+                    });
+                });
+
+                scene.add(model);
+
+                // Position the camera
+                camera.position.z = 5;
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    model.rotation.y += 0.01; // Rotate the model
+                    renderer.render(scene, camera);
+                }
+
+                animate();
+            }, undefined, function (error) {
+                console.error('Error loading model:', error);
             });
-
-            camera.position.z = 5;
-
-            function animate() {
-                requestAnimationFrame(animate);
-                cube.rotation.x += 0.01;
-                cube.rotation.y += 0.01;
-                renderer.render(scene, camera);
-            }
-
-            animate();
         }
     </script>
 </body>
