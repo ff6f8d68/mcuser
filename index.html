@@ -35,7 +35,7 @@
             if (!username) return;
 
             try {
-                const response = await fetch(`https://mcuser.netlify.app/.netlify/functions/minecraftData?username=${username}`);
+                const response = await fetch(`/api/minecraftData?username=${username}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch data');
                 }
