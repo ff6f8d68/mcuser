@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>mcuser</title>
+  <title>Minecraft User Info</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -61,8 +62,8 @@
     <h1>Minecraft User Info</h1>
     <input
       type="text"
-      id="uuidInput"
-      placeholder="Enter UUID"
+      id="usernameInput"
+      placeholder="Enter Username"
     />
     <button onclick="fetchUserData()">Fetch Data</button>
 
@@ -71,23 +72,31 @@
   </div>
 
   <script>
-    async function fetchUserData() {
-      const uuid = document.getElementById('uuidInput').value.trim();
-      if (!uuid) {
-        document.getElementById('error').innerText = 'UUID is required';
+    // Function to get URL query parameters
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    // Function to fetch Minecraft user data
+    async function fetchUserData(username = '') {
+      if (!username) {
+        username = document.getElementById('usernameInput').value.trim();
+      }
+      if (!username) {
+        document.getElementById('error').innerText = 'Username is required';
         return;
       }
 
       try {
-        const profileResponse = await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`);
-        
-        if (!profileResponse.ok) {
-          throw new Error(`HTTP error! Status: ${profileResponse.status}`);
+        // Call the Netlify function with the username
+        const response = await fetch(`/.netlify/functions/minecraft-user?username=${username}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const profileData = await profileResponse.json();
+        const profileData = await response.json();
 
-        // Check if profile data contains 'properties' and 'textures'
         const texturesProp = profileData.properties.find(prop => prop.name === 'textures');
         if (texturesProp) {
           // Decode the base64-encoded textures value
@@ -116,6 +125,15 @@
         document.getElementById('userInfo').innerHTML = '';
       }
     }
+
+    // Automatically fetch data if 'user' query parameter exists
+    window.onload = function() {
+      const usernameFromURL = getQueryParam('user');
+      if (usernameFromURL) {
+        document.getElementById('usernameInput').value = usernameFromURL;
+        fetchUserData(usernameFromURL);
+      }
+    };
   </script>
 </body>
 </html>
