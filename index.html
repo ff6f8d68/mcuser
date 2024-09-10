@@ -90,7 +90,7 @@
 
       try {
         // Call the Netlify function with the username
-        const response = await fetch(`/.netlify/functions/minecraft-user?username=${username}`);
+        const response = await fetch(`https://mcuser.netlify.app/.netlify/functions/minecraft-users?username=${username}`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
