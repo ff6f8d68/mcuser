@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft User Info</title>
+  <title>MCuser</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -45,18 +45,6 @@
       color: red;
       margin-top: 20px;
     }
-    .no-cape {
-      color: #666;
-      font-style: italic;
-    }
-    #usernameInput, button {
-      display: none;
-    }
-    /* Make the search bar and button visible if no user is in URL */
-    .show-search #usernameInput, .show-search button {
-      display: inline-block;
-    }
-    /* Style for the 3D skin viewer */
     #skinViewer {
       width: 300px;
       height: 400px;
@@ -64,17 +52,11 @@
       background-color: #eee;
     }
   </style>
-  <!-- Include skinview3d library -->
-  <script src="https://cdn.jsdelivr.net/npm/skinview3d@0.8.2/dist/skinview3d.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Minecraft User Info</h1>
-    <input
-      type="text"
-      id="usernameInput"
-      placeholder="Enter Username"
-    />
+    <h1>MCuser</h1>
+    <input type="text" id="usernameInput" placeholder="Enter Username" />
     <button onclick="fetchUserData()">Fetch Data</button>
 
     <div id="error" class="error"></div>
@@ -82,18 +64,11 @@
     <canvas id="skinViewer"></canvas>
   </div>
 
-  <script>
-    // Function to get URL query parameters
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
-    }
+  <script type="module">
+    import * as skinview3d from 'https://cdn.jsdelivr.net/npm/skinview3d@0.8.2/dist/skinview3d.esm.js';
 
-    // Function to fetch Minecraft user data
-    async function fetchUserData(username = '') {
-      if (!username) {
-        username = document.getElementById('usernameInput').value.trim();
-      }
+    async function fetchUserData() {
+      const username = document.getElementById('usernameInput').value.trim();
       if (!username) {
         document.getElementById('error').innerText = 'Username is required';
         return;
@@ -123,16 +98,16 @@
           document.getElementById('userInfo').innerHTML = `
             <h2>${profileData.name}</h2>
             <p>UUID: ${profileData.id}</p>
-            ${capeUrl ? `<img src="${capeUrl}" alt="Cape" />` : '<p class="no-cape">No cape available</p>'}
+            ${capeUrl ? `<img src="${capeUrl}" alt="Cape" />` : '<p>No cape available</p>'}
           `;
-          
+
           // Initialize skin viewer
           const skinViewer = new skinview3d.SkinViewer({
             canvas: document.getElementById('skinViewer'),
             width: 300,
             height: 400,
             skin: skinUrl,
-            model: decodedTextures.textures.SKIN.metadata ? decodedTextures.textures.SKIN.metadata.model : 'default'
+            enableControls: true
           });
 
           // Configure the viewer
@@ -155,20 +130,6 @@
         document.getElementById('skinViewer').style.display = 'none';
       }
     }
-
-    // Automatically fetch data if 'user' query parameter exists
-    window.onload = function() {
-      const usernameFromURL = getQueryParam('user');
-      if (usernameFromURL) {
-        document.getElementById('usernameInput').value = usernameFromURL;
-        fetchUserData(usernameFromURL);
-        // Hide the search bar when user data is being viewed
-        document.body.classList.remove('show-search');
-      } else {
-        // Show the search bar if no user data is being viewed
-        document.body.classList.add('show-search');
-      }
-    };
   </script>
 </body>
 </html>
