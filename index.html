@@ -5,15 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft Skin Viewer</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        #searchContainer {
+            display: block;
+        }
+        #playerData {
+            margin-top: 20px;
+        }
+        #skinViewer {
+            margin-top: 20px;
+            width: 400px;
+            height: 400px;
+        }
+    </style>
 </head>
 <body>
     <h1>Minecraft Skin Viewer</h1>
-    <input type="text" id="username" placeholder="Enter Minecraft username">
-    <button onclick="fetchPlayerData()">Get Player Data</button>
-
+    <div id="searchContainer">
+        <input type="text" id="username" placeholder="Enter Minecraft username">
+        <button onclick="fetchPlayerData()">Get Player Data</button>
+    </div>
     <div id="playerData"></div>
     <div id="skinViewer"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/TextureLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/OBJLoader.js"></script>
     <script>
         async function fetchPlayerData() {
             const username = document.getElementById('username').value;
@@ -32,13 +49,44 @@
                     return;
                 }
 
+                // Hide the search bar
+                document.getElementById('searchContainer').style.display = 'none';
+
                 document.getElementById('playerData').innerText = `Username: ${data.username}\nUUID: ${data.uuid}`;
-                document.getElementById('skinViewer').innerHTML = `<img src="${data.skinUrl}" alt="${data.username}'s Skin" style="width: 200px; height: 200px;">`;
+
+                // Render the Minecraft skin in 3D
+                renderSkinIn3D(data.skinUrl);
             } catch (error) {
                 document.getElementById('playerData').innerText = 'An error occurred while fetching data.';
                 document.getElementById('skinViewer').innerHTML = '';
                 console.error(error);
             }
+        }
+
+        function renderSkinIn3D(skinUrl) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer();
+            renderer.setSize(400, 400);
+            document.getElementById('skinViewer').appendChild(renderer.domElement);
+
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const textureLoader = new THREE.TextureLoader();
+            const texture = textureLoader.load(skinUrl);
+            const material = new THREE.MeshBasicMaterial({ map: texture });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            camera.position.z = 2;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+
+            animate();
         }
     </script>
 </body>
