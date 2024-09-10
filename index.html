@@ -1,0 +1,121 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mcuser</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input {
+      padding: 10px;
+      width: 300px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .user-info {
+      margin-top: 20px;
+    }
+    .user-info img {
+      margin: 10px;
+      max-width: 100px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .error {
+      color: red;
+      margin-top: 20px;
+    }
+    .no-cape {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Minecraft User Info</h1>
+    <input
+      type="text"
+      id="uuidInput"
+      placeholder="Enter UUID"
+    />
+    <button onclick="fetchUserData()">Fetch Data</button>
+
+    <div id="error" class="error"></div>
+    <div id="userInfo" class="user-info"></div>
+  </div>
+
+  <script>
+    async function fetchUserData() {
+      const uuid = document.getElementById('uuidInput').value.trim();
+      if (!uuid) {
+        document.getElementById('error').innerText = 'UUID is required';
+        return;
+      }
+
+      try {
+        const profileResponse = await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`);
+        
+        if (!profileResponse.ok) {
+          throw new Error(`HTTP error! Status: ${profileResponse.status}`);
+        }
+
+        const profileData = await profileResponse.json();
+
+        // Check if profile data contains 'properties' and 'textures'
+        const texturesProp = profileData.properties.find(prop => prop.name === 'textures');
+        if (texturesProp) {
+          // Decode the base64-encoded textures value
+          const texturesValue = texturesProp.value;
+          const decodedTextures = JSON.parse(atob(texturesValue));
+          
+          // Extract skin and cape URLs
+          const skinUrl = decodedTextures.textures.SKIN ? decodedTextures.textures.SKIN.url : '';
+          const capeUrl = decodedTextures.textures.CAPE ? decodedTextures.textures.CAPE.url : '';
+
+          // Update UI with player info
+          document.getElementById('error').innerText = '';
+          document.getElementById('userInfo').innerHTML = `
+            <h2>${profileData.name}</h2>
+            <p>UUID: ${profileData.id}</p>
+            ${skinUrl ? `<img src="${skinUrl}" alt="Skin" />` : '<p>No skin available</p>'}
+            ${capeUrl ? `<img src="${capeUrl}" alt="Cape" />` : '<p class="no-cape">No cape available</p>'}
+          `;
+        } else {
+          document.getElementById('error').innerText = 'No textures property found in the profile data';
+          document.getElementById('userInfo').innerHTML = '';
+        }
+      } catch (error) {
+        document.getElementById('error').innerText = `Error fetching user data: ${error.message}`;
+        console.error(error); // Log error to the console for debugging
+        document.getElementById('userInfo').innerHTML = '';
+      }
+    }
+  </script>
+</body>
+</html>
