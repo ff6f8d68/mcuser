@@ -15,6 +15,7 @@
             margin-top: 20px;
             width: 400px;
             height: 600px; /* Adjust height to fit the player model */
+            border: 1px solid #ccc;
         }
     </style>
 </head>
@@ -27,20 +28,21 @@
     <div id="playerData"></div>
     <div id="skinViewer"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/minecraft-skin-viewer@2.0.0/dist/skin-viewer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/jsm/loaders/TextureLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/jsm/OBJLoader.js"></script>
     <script>
         async function fetchPlayerData() {
             const username = document.getElementById('username').value;
             if (!username) return;
 
             try {
-                const response = await fetch(`https://mcuser.netlify.app/.netlify/functions/minecraftData?username==${username}`);
-                console.log('Response status:', response.status); // Log the response status
+                const response = await fetch(`https://mcuser.netlify.app/.netlify/functions/minecraftData?username=${username}`);
                 if (!response.ok) {
-                    throw new Error('Failed to fetch data: ' + response.statusText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log('Fetched data:', data); // Log the fetched data
 
                 if (data.error) {
                     document.getElementById('playerData').innerText = data.error;
@@ -58,27 +60,41 @@
             } catch (error) {
                 document.getElementById('playerData').innerText = 'An error occurred while fetching data.';
                 document.getElementById('skinViewer').innerHTML = '';
-                console.error('Error fetching data:', error); // Log the error
+                console.error('Error fetching data:', error);
             }
         }
 
         function renderSkinIn3D(skinUrl) {
-            // Ensure the MinecraftSkinViewer library is properly loaded
-            if (typeof MinecraftSkinViewer === 'undefined') {
-                console.error('MinecraftSkinViewer library is not loaded');
-                return;
-            }
+            // Initialize the scene, camera, and renderer
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('skinViewer').appendChild(renderer.domElement);
 
-            // Initialize the MinecraftSkinViewer with the skin URL
-            const viewer = new MinecraftSkinViewer({
-                container: document.getElementById('skinViewer'),
-                model: 'steve', // Can be 'steve' or 'alex'
-                skin: skinUrl
+            // Create a basic Minecraft player model
+            const geometry = new THREE.BoxGeometry();
+            const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            // Load the skin texture
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(skinUrl, function(texture) {
+                cube.material.map = texture;
+                cube.material.needsUpdate = true;
             });
 
-            // Optionally customize the viewer
-            viewer.setBackgroundColor('#ffffff'); // Set background color
-            viewer.setCameraPosition(0, 0, 2); // Adjust the camera position if needed
+            camera.position.z = 5;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+
+            animate();
         }
     </script>
 </body>
