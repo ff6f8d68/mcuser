@@ -56,9 +56,16 @@
     .show-search #usernameInput, .show-search button {
       display: inline-block;
     }
+    /* Style for the 3D skin viewer */
+    #skinViewer {
+      width: 300px;
+      height: 400px;
+      margin: 20px auto;
+      background-color: #eee;
+    }
   </style>
-  <!-- MineRender skin viewer script -->
-  <script src="https://mineskin.org/3d/js/3dskin.min.js"></script>
+  <!-- Include skinview3d library -->
+  <script src="https://cdn.jsdelivr.net/npm/skinview3d@latest/dist/skinview3d.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -72,6 +79,7 @@
 
     <div id="error" class="error"></div>
     <div id="userInfo" class="user-info"></div>
+    <canvas id="skinViewer"></canvas>
   </div>
 
   <script>
@@ -92,20 +100,20 @@
       }
 
       try {
-        // Updated to use absolute URL for the Netlify function
+        // Fetch user data from Netlify function
         const response = await fetch(`https://mcuser.netlify.app/.netlify/functions/minecraft-users?username=${username}`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
         const profileData = await response.json();
-
         const texturesProp = profileData.properties.find(prop => prop.name === 'textures');
+
         if (texturesProp) {
           // Decode the base64-encoded textures value
           const texturesValue = texturesProp.value;
           const decodedTextures = JSON.parse(atob(texturesValue));
-          
+
           // Extract skin and cape URLs
           const skinUrl = decodedTextures.textures.SKIN ? decodedTextures.textures.SKIN.url : '';
           const capeUrl = decodedTextures.textures.CAPE ? decodedTextures.textures.CAPE.url : '';
@@ -115,28 +123,36 @@
           document.getElementById('userInfo').innerHTML = `
             <h2>${profileData.name}</h2>
             <p>UUID: ${profileData.id}</p>
-            <div id="skinViewer"></div>
             ${capeUrl ? `<img src="${capeUrl}" alt="Cape" />` : '<p class="no-cape">No cape available</p>'}
           `;
           
-          // If a skin exists, render it in 3D
-          if (skinUrl) {
-            new SkinViewer({
-              canvas: document.getElementById('skinViewer'),
-              width: 300,
-              height: 400,
-              skin: skinUrl,
-              model: decodedTextures.textures.SKIN.metadata ? decodedTextures.textures.SKIN.metadata.model : 'default'
-            });
+          // Initialize skin viewer
+          const skinViewer = new skinview3d.SkinViewer({
+            canvas: document.getElementById('skinViewer'),
+            width: 300,
+            height: 400,
+            skin: skinUrl,
+            model: decodedTextures.textures.SKIN.metadata ? decodedTextures.textures.SKIN.metadata.model : 'default'
+          });
+
+          // Configure the viewer
+          skinViewer.background = 0x5a76f3; // Set background color
+          skinViewer.autoRotate = true;    // Enable auto-rotation
+
+          // Load cape if it exists
+          if (capeUrl) {
+            skinViewer.loadCape(capeUrl);
           }
         } else {
           document.getElementById('error').innerText = 'No textures property found in the profile data';
           document.getElementById('userInfo').innerHTML = '';
+          document.getElementById('skinViewer').style.display = 'none';
         }
       } catch (error) {
         document.getElementById('error').innerText = `Error fetching user data: ${error.message}`;
         console.error(error); // Log error to the console for debugging
         document.getElementById('userInfo').innerHTML = '';
+        document.getElementById('skinViewer').style.display = 'none';
       }
     }
 
