@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MCuser</title>
+  <title>Minecraft User Info</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -55,7 +55,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>MCuser</h1>
+    <h1>Minecraft User Info</h1>
     <input type="text" id="usernameInput" placeholder="Enter Username" />
     <button onclick="fetchUserData()">Fetch Data</button>
 
@@ -113,11 +113,9 @@
           // Configure the viewer
           skinViewer.background = 0x5a76f3; // Set background color
           skinViewer.autoRotate = true;    // Enable auto-rotation
-
-          // Load cape if it exists
-          if (capeUrl) {
-            skinViewer.loadCape(capeUrl);
-          }
+          skinViewer.zoom = 1;             // Set zoom level
+          skinViewer.fov = 70;             // Set field of view
+          skinViewer.animation = new skinview3d.WalkingAnimation(); // Add walking animation
         } else {
           document.getElementById('error').innerText = 'No textures property found in the profile data';
           document.getElementById('userInfo').innerHTML = '';
