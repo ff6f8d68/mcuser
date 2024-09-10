@@ -1,6 +1,6 @@
-const axios = require('axios');
+import axios from 'axios';
 
-exports.handler = async (event) => {
+export async function handler(event) {
     const username = event.queryStringParameters.username;
 
     if (!username) {
@@ -14,7 +14,7 @@ exports.handler = async (event) => {
         // Step 1: Get the player's UUID from the username
         const playerResponse = await axios.get(`https://api.mojang.com/users/profiles/minecraft/${username}`);
         const playerData = playerResponse.data;
-        
+
         // Step 2: Get the player's skin URL from the UUID
         const profileResponse = await axios.get(`https://sessionserver.mojang.com/session/minecraft/profile/${playerData.id}`);
         const profileData = profileResponse.data;
@@ -37,4 +37,4 @@ exports.handler = async (event) => {
             body: JSON.stringify({ error: error.message }),
         };
     }
-};
+}
