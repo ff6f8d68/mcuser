@@ -82,45 +82,34 @@
         }
 
         const profileData = await response.json();
-        const texturesProp = profileData.properties.find(prop => prop.name === 'textures');
 
-        if (texturesProp) {
-          // Decode the base64-encoded textures value
-          const texturesValue = texturesProp.value;
-          const decodedTextures = JSON.parse(atob(texturesValue));
+        // Extract skin and cape URLs
+        const skinUrl = profileData.skin || '';
+        const capeUrl = profileData.cape || '';
 
-          // Extract skin and cape URLs
-          const skinUrl = decodedTextures.textures.SKIN ? decodedTextures.textures.SKIN.url : '';
-          const capeUrl = decodedTextures.textures.CAPE ? decodedTextures.textures.CAPE.url : '';
+        // Update UI with player info
+        document.getElementById('error').innerText = '';
+        document.getElementById('userInfo').innerHTML = `
+          <h2>${profileData.name}</h2>
+          <p>UUID: ${profileData.id}</p>
+          ${capeUrl ? `<img src="${capeUrl}" alt="Cape" />` : '<p>No cape available</p>'}
+        `;
 
-          // Update UI with player info
-          document.getElementById('error').innerText = '';
-          document.getElementById('userInfo').innerHTML = `
-            <h2>${profileData.name}</h2>
-            <p>UUID: ${profileData.id}</p>
-            ${capeUrl ? `<img src="${capeUrl}" alt="Cape" />` : '<p>No cape available</p>'}
-          `;
+        // Initialize skin viewer
+        const skinViewer = new skinview3d.SkinViewer({
+          canvas: document.getElementById('skinViewer'),
+          width: 300,
+          height: 400,
+          skin: skinUrl,
+          enableControls: true
+        });
 
-          // Initialize skin viewer
-          const skinViewer = new skinview3d.SkinViewer({
-            canvas: document.getElementById('skinViewer'),
-            width: 300,
-            height: 400,
-            skin: skinUrl,
-            enableControls: true
-          });
-
-          // Configure the viewer
-          skinViewer.background = 0x5a76f3; // Set background color
-          skinViewer.autoRotate = true;    // Enable auto-rotation
-          skinViewer.zoom = 1;             // Set zoom level
-          skinViewer.fov = 70;             // Set field of view
-          skinViewer.animation = new skinview3d.WalkingAnimation(); // Add walking animation
-        } else {
-          document.getElementById('error').innerText = 'No textures property found in the profile data';
-          document.getElementById('userInfo').innerHTML = '';
-          document.getElementById('skinViewer').style.display = 'none';
-        }
+        // Configure the viewer
+        skinViewer.background = 0x5a76f3; // Set background color
+        skinViewer.autoRotate = true;    // Enable auto-rotation
+        skinViewer.zoom = 1;             // Set zoom level
+        skinViewer.fov = 70;             // Set field of view
+        skinViewer.animation = new skinview3d.WalkingAnimation(); // Add walking animation
       } catch (error) {
         document.getElementById('error').innerText = `Error fetching user data: ${error.message}`;
         console.error(error); // Log error to the console for debugging
