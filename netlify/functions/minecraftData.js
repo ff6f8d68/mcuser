@@ -1,6 +1,6 @@
-import fetch from 'node-fetch';
+const axios = require('axios');
 
-export async function handler(event) {
+exports.handler = async (event) => {
     const username = event.queryStringParameters.username;
 
     if (!username) {
@@ -12,18 +12,12 @@ export async function handler(event) {
 
     try {
         // Step 1: Get the player's UUID from the username
-        const playerResponse = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
-        if (!playerResponse.ok) {
-            throw new Error('User not found');
-        }
-        const playerData = await playerResponse.json();
+        const playerResponse = await axios.get(`https://api.mojang.com/users/profiles/minecraft/${username}`);
+        const playerData = playerResponse.data;
         
         // Step 2: Get the player's skin URL from the UUID
-        const profileResponse = await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${playerData.id}`);
-        if (!profileResponse.ok) {
-            throw new Error('Profile not found');
-        }
-        const profileData = await profileResponse.json();
+        const profileResponse = await axios.get(`https://sessionserver.mojang.com/session/minecraft/profile/${playerData.id}`);
+        const profileData = profileResponse.data;
         const properties = profileData.properties.find(prop => prop.name === 'textures');
         const textures = JSON.parse(Buffer.from(properties.value, 'base64').toString('utf8'));
         const skinUrl = textures.textures.SKIN.url;
@@ -43,4 +37,4 @@ export async function handler(event) {
             body: JSON.stringify({ error: error.message }),
         };
     }
-}
+};
