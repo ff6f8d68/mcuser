@@ -65,7 +65,6 @@
   </div>
 
   <script type="module">
-    // Import the skinview3d library
     import * as skinview3d from 'https://cdn.jsdelivr.net/npm/skinview3d@0.8.2/dist/skinview3d.esm.js';
 
     async function fetchUserData() {
@@ -76,7 +75,6 @@
       }
 
       try {
-        // Fetch user data from Netlify function
         const response = await fetch(`/.netlify/functions/mcuser?username=${username}`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -87,11 +85,9 @@
           throw new Error(profileData.error);
         }
 
-        // Extract skin and cape URLs
         const skinUrl = profileData.skin || '';
         const capeUrl = profileData.cape || '';
 
-        // Update UI with player info
         document.getElementById('error').innerText = '';
         document.getElementById('userInfo').innerHTML = `
           <h2>${profileData.name}</h2>
@@ -99,7 +95,6 @@
           ${capeUrl ? `<p><strong>Cape:</strong> <img src="${capeUrl}" alt="Cape" /></p>` : '<p>No cape available</p>'}
         `;
 
-        // Initialize skin viewer
         const canvas = document.getElementById('skinViewer');
         if (!canvas) {
           throw new Error('Canvas element not found');
@@ -114,43 +109,32 @@
         });
 
         // Configure the viewer
-        skinViewer.background = 0x5a76f3; // Set background color
-        skinViewer.autoRotate = true;    // Enable auto-rotation
-        skinViewer.zoom = 1;             // Set zoom level
-        skinViewer.fov = 70;             // Set field of view
-        skinViewer.animation = new skinview3d.WalkingAnimation(); // Add walking animation
+        skinViewer.background = 0x5a76f3;
+        skinViewer.autoRotate = true;
+        skinViewer.zoom = 1;
+        skinViewer.fov = 70;
+        skinViewer.animation = new skinview3d.WalkingAnimation();
 
-        // Load cape if available
         if (capeUrl) {
           skinViewer.loadCape(capeUrl);
         }
       } catch (error) {
         document.getElementById('error').innerText = `Error fetching user data: ${error.message}`;
-        console.error(error); // Log error to the console for debugging
+        console.error(error);
         document.getElementById('userInfo').innerHTML = '';
         document.getElementById('skinViewer').style.display = 'none';
       }
     }
 
-    // Handle user input
-    function handleUserInput() {
-      const username = document.getElementById('usernameInput').value.trim();
-      if (username) {
-        fetchUserData(username);
-      }
-    }
-
-    // Check for username query parameter in URL
     function handleQueryParameter() {
       const urlParams = new URLSearchParams(window.location.search);
       const username = urlParams.get('user');
       if (username) {
         document.getElementById('usernameInput').value = username;
-        fetchUserData(username);
+        fetchUserData();
       }
     }
 
-    // Call the function to check for query parameters on page load
     handleQueryParameter();
   </script>
 </body>
