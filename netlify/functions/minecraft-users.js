@@ -1,3 +1,4 @@
+// Netlify function to fetch Minecraft user data by username
 exports.handler = async function(event, context) {
   const username = event.queryStringParameters.username;
 
@@ -6,6 +7,7 @@ exports.handler = async function(event, context) {
       statusCode: 400,
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: 'Username is required' })
     };
@@ -13,7 +15,7 @@ exports.handler = async function(event, context) {
 
   try {
     // Dynamically import node-fetch for ESM compatibility
-    const fetch = (await import('node-fetch')).default;
+    const { default: fetch } = await import('node-fetch');
 
     // Step 1: Fetch UUID using the username
     const uuidResponse = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
@@ -23,6 +25,7 @@ exports.handler = async function(event, context) {
         statusCode: uuidResponse.status,
         headers: {
           'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ error: `Failed to fetch UUID for username ${username}` })
       };
@@ -39,24 +42,35 @@ exports.handler = async function(event, context) {
         statusCode: profileResponse.status,
         headers: {
           'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ error: 'Failed to fetch data from Mojang API' })
       };
     }
 
     const profileData = await profileResponse.json();
+
+    // Remove unnecessary fields if needed
+    const { properties, id, name } = profileData;
+
     return {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(profileData)
+      body: JSON.stringify({
+        id,
+        name,
+        properties
+      })
     };
   } catch (error) {
     return {
       statusCode: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: 'Internal Server Error' })
     };
